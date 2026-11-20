@@ -779,6 +779,48 @@ The token is an OAuth bearer token minted from a Databricks service principal, a
 </Note>
 
 </Tab>
+<Tab title="Axiom">
+
+[Axiom](https://axiom.co) accepts OpenTelemetry data over OTLP/HTTP. Use `protocol: "http"`, because Axiom does not support gRPC. Axiom routes each signal by header: traces go to an events dataset set with `X-Axiom-Dataset`, and metrics go to a metrics dataset set with `X-Axiom-Metrics-Dataset`. Put each dataset header in [`trace_headers` / `metrics_headers`](#per-signal-headers) (Bifrost v2.0.0 and above) and keep the shared `Authorization` token in `headers`.
+
+```json
+{
+  "plugins": [
+    {
+      "enabled": true,
+      "name": "otel",
+      "config": {
+        "service_name": "bifrost",
+        "collector_url": "https://<axiom-domain>/v1/traces",
+        "trace_type": "genai_extension",
+        "protocol": "http",
+        "headers": {
+          "Authorization": "env.AXIOM_API_TOKEN"
+        },
+        "trace_headers": {
+          "X-Axiom-Dataset": "bifrost-traces"
+        },
+        "metrics_enabled": true,
+        "metrics_endpoint": "https://<axiom-domain>/v1/metrics",
+        "metrics_headers": {
+          "X-Axiom-Metrics-Dataset": "bifrost-metrics"
+        }
+      }
+    }
+  ]
+}
+```
+
+Replace `<axiom-domain>` with your Axiom [edge domain](https://axiom.co/docs/reference/edge-deployments), for example `us-east-1.aws.edge.axiom.co`. To export traces only, remove the `metrics_enabled`, `metrics_endpoint` and `metrics_headers` fields.
+
+Set environment variable:
+```bash
+export AXIOM_API_TOKEN="Bearer <your-axiom-api-token>"
+```
+
+Use an Axiom API token with ingest permission for both datasets. See the [Axiom OpenTelemetry documentation](https://axiom.co/docs/send-data/opentelemetry) for more details.
+
+</Tab>
 <Tab title="Self-Hosted">
 
 Use the included Docker Compose stack or point to your own collector:
